@@ -1,0 +1,39 @@
+//mode flag = 5
+[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16+9] = 5;
+
+alias userSP R0;
+userSP = SP;
+
+[PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+13] = userSP;
+SP = [PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+11]*512-1;
+
+alias fileDescriptor R4;
+fileDescriptor = [([PTBR + 2*(userSP-4)/512]*512)+((userSP-4)%512)];
+
+if(fileDescriptor != -2)
+then
+	//set ret value to -1
+	alias phyAddRetVal R5;
+	phyAddRetVal = ([PTBR + 2*(userSP-1)/512]*512)+((userSP-1)%512);
+	[phyAddRetVal] = -1;
+
+else
+	//getting arg2
+	alias word R5;
+	word = [([PTBR + 2*(userSP-3)/512]*512)+((userSP-3)%512)];
+	print word;
+
+	//set ret value to 0
+	alias phyAddRetVal R6;
+	phyAddRetVal = ([PTBR + 2*(userSP-1)/512]*512)+((userSP-1)%512);
+	[phyAddRetVal] = 0;
+
+endif;
+
+//moving back to user stack
+SP = userSP;
+
+//mode flag = 0
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16+9]=0;
+
+ireturn;

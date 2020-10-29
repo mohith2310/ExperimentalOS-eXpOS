@@ -1,0 +1,13 @@
+int main()
+{
+decl
+    int temp,num;
+enddecl
+begin
+    num=1;
+    while ( num ==1 ) do
+    	num=1;
+    endwhile;
+    return 0;
+end
+}

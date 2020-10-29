@@ -1,0 +1,12 @@
+alias sum R0;
+alias temp R1;
+
+sum=0;
+temp=1;
+while(temp<=20) do
+	sum=sum+temp*temp;
+	temp=temp+1;
+endwhile;
+print sum;
+
+

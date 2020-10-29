@@ -1,0 +1,90 @@
+
+//-----------------------SCHEDULER------------------------//
+
+///////////////////////////////////////////////////////////
+//////////////////////get cur process id///////////////////
+///////////////////////////////////////////////////////////
+
+alias curID R0;
+curID = [SYSTEM_STATUS_TABLE+1];
+
+multipush(BP);
+
+////////////////////////////////////////////////////////////
+////////saving cur process context in process table/////////
+////////////////////////////////////////////////////////////
+
+alias cur_pro_entry R1;
+cur_pro_entry = PROCESS_TABLE + 16*curID;
+
+[cur_pro_entry+12] = SP%512;
+[cur_pro_entry+14] = PTBR;
+[cur_pro_entry+15] = PTLR;
+
+/////////////////////////////////////////////////////////////
+////////////////////process switching////////////////////////
+/////////////////////////////////////////////////////////////
+
+alias newID R4;
+
+newID = curID;
+
+while(1==1) do
+ newID = (newID + 1)%16;
+
+ if(newID==curID) then
+  newID = 0;	//idle
+  break;
+ endif;
+
+ if(newID==0) then
+  continue;
+ endif;
+
+ if([PROCESS_TABLE+16*newID+4]==CREATED) then
+  break;
+ endif; 
+ 
+ if([PROCESS_TABLE+16*newID+4]==READY) then
+  break;
+ endif;
+
+endwhile;
+
+if(curID==0) then
+ if(newID==0) then
+  halt;
+ endif;
+endif;
+//////////////////////////////////////////////////////////////
+//////////restoring other process(scheduled) context//////////
+//////////////////////////////////////////////////////////////
+
+alias new_pro_entry R6;
+new_pro_entry = PROCESS_TABLE + 16*(newID);
+
+
+SP = ([new_pro_entry + 11]*512) + [new_pro_entry + 12];
+
+PTBR = [new_pro_entry + 14];
+PTLR = [new_pro_entry + 15];
+
+[SYSTEM_STATUS_TABLE + 1] = newID;
+
+if( [new_pro_entry + 4] == CREATED )	then
+	
+	SP = [new_pro_entry + 13];
+	//BP = [[new_pro_entry + 11]*512];
+
+	[new_pro_entry + 4] = RUNNING;
+	[new_pro_entry + 9] = 0;
+
+	ireturn;
+
+endif;
+
+[new_pro_entry + 4] = RUNNING;
+
+multipop(BP);
+
+return;

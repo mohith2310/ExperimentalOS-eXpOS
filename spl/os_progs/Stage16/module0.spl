@@ -1,0 +1,45 @@
+//------------RESOURCE MANAGER MODULE-----------------//
+
+alias funNum R1;
+alias curID R2;
+
+if(funNum == ACQUIRE_TERMINAL )	then
+	
+	while( ([TERMINAL_STATUS_TABLE]) == 1)	do
+		
+		[PROCESS_TABLE + (curID*16) + 4] = WAIT_TERMINAL;
+		
+		backup;
+		call MOD_5;
+		restore;
+		
+	endwhile;
+
+	[TERMINAL_STATUS_TABLE] = 1;
+	[TERMINAL_STATUS_TABLE+1] = curID;
+
+	return;
+
+endif;
+
+if(funNum == RELEASE_TERMINAL)	then
+	
+	if(curID != [TERMINAL_STATUS_TABLE+1])	then
+		R0 = -1;
+		return;
+	endif;
+		
+	[TERMINAL_STATUS_TABLE] = 0;
+	alias i R4;
+	i=0;
+	while(i<16)	do
+		if([PROCESS_TABLE + (i*16) + 4] == WAIT_TERMINAL) then
+			[PROCESS_TABLE + (i*16) + 4] = READY;
+		endif;
+	i = i+1;
+
+	endwhile;
+	R0 = 0;
+
+	return;
+endif;

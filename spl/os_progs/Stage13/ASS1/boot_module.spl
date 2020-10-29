@@ -1,0 +1,115 @@
+loadi(65,7); //init
+loadi(66,8);
+
+loadi(88,69);  //exec file
+
+loadi(22, 35); //int10
+loadi(23, 36);
+
+loadi(2,15); //excep handler
+loadi(3,16);
+
+loadi(63,13); //library
+loadi(64,14);
+
+loadi(4,17); //timer int
+loadi(5,18);
+
+loadi(16,29); //write int
+loadi(17,30);
+
+//.....Page Table Entry for INIT process pid=1.....//
+
+PTBR = PAGE_TABLE_BASE+20;
+PTLR=10;
+
+//.....library.......//
+[PTBR+0]= 63;
+[PTBR+1]= "0100";
+[PTBR+2]= 64;
+[PTBR+3]= "0100";
+
+
+//.....Heap........//
+[PTBR+4]= 78;
+[PTBR+5]= "0110";
+[PTBR+6]= 79;
+[PTBR+7]= "0110";
+
+
+//.....code.......//
+[PTBR+8]=65;
+[PTBR+9]="0100";
+[PTBR+10]=66;
+[PTBR+11]="0100";
+[PTBR+12]=-1;
+[PTBR+13]="0000";
+[PTBR+14]=-1;
+[PTBR+15]="0000";
+
+
+//.......stack.......//
+[PTBR+16]=76;
+[PTBR+17]="0110";
+[PTBR+18]=77;
+[PTBR+19]="0110";
+
+[76*512]=[65*512+1];
+
+//....process table
+[PROCESS_TABLE+16+1] = 1;          //pid
+[PROCESS_TABLE+16+4] = CREATED;    //State
+[PROCESS_TABLE+16+11] = 80;        //User Area Page
+[PROCESS_TABLE+16+13] = 8*512;     //UPTR
+[PROCESS_TABLE+16+12] = 0;         //KPTR
+[PROCESS_TABLE+16+14] = PAGE_TABLE_BASE+20;   //PTBR
+[PROCESS_TABLE+16+15] = 10;        //PTLR
+
+//.....Page Table Entry for Exec file process pid=2.....//
+
+PTBR = PAGE_TABLE_BASE+40;
+PTLR=10;
+
+//.....library.......//
+[PTBR+0]= 63;
+[PTBR+1]= "0100";
+[PTBR+2]= 64;
+[PTBR+3]= "0100";
+
+
+//.....Heap........//
+[PTBR+4]= 83;
+[PTBR+5]= "0110";
+[PTBR+6]= 84;
+[PTBR+7]= "0110";
+
+
+//.....code.......//
+[PTBR+8]=88;
+[PTBR+9]="0100";
+[PTBR+10]=-1;
+[PTBR+11]="0000";
+[PTBR+12]=-1;
+[PTBR+13]="0000";
+[PTBR+14]=-1;
+[PTBR+15]="0000";
+
+
+//.......stack.......//
+[PTBR+16]=85;
+[PTBR+17]="0110";
+[PTBR+18]=86;
+[PTBR+19]="0110";
+
+[85*512]=[88*512+1];
+
+//....process table
+[PROCESS_TABLE+16*2+1] = 2;          //pid
+[PROCESS_TABLE+16*2+4] = CREATED;    //State
+[PROCESS_TABLE+16*2+11] = 87;        //User Area Page
+[PROCESS_TABLE+16*2+13] = 8*512;     //UPTR
+[PROCESS_TABLE+16*2+12] = 0;         //KPTR
+[PROCESS_TABLE+16*2+14] = PAGE_TABLE_BASE+40;   //PTBR
+[PROCESS_TABLE+16*2+15] = 10;        //PTLR
+
+return;

@@ -1,0 +1,39 @@
+[PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+13] = SP;		//UPTR
+SP = [PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+11]*512-1;	//SP point to kernal stack
+backup;
+
+alias curProEntry R1;
+curProEntry = PROCESS_TABLE+(16*[SYSTEM_STATUS_TABLE+1]);
+
+[curProEntry+12] = SP%512;  //store offset of KPTR...OS reloactes userarea page if necessary
+[curProEntry+14] = PTBR;
+[curProEntry+15] = PTLR;
+
+[curProEntry+4] = READY;
+
+alias newID R2;
+if([SYSTEM_STATUS_TABLE+1]==1) then
+	newID=0;
+else 
+	newID=1;
+endif;
+
+alias new_process_entry R3;
+new_process_entry = PROCESS_TABLE + (newID*16);
+
+SP = [new_process_entry+11]*512 + [new_process_entry+12];
+PTBR = [new_process_entry+14];
+PTLR = [new_process_entry+15];
+
+[SYSTEM_STATUS_TABLE+1] = newID;
+
+if([new_process_entry+4]==CREATED) then
+	[new_process_entry+4]=RUNNING;
+	SP = [new_process_entry+13];
+	ireturn;
+endif;
+
+[new_process_entry+4]=RUNNING;
+restore;
+SP = [PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+13];
+ireturn;

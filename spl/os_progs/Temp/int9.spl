@@ -1,0 +1,165 @@
+//--------------------------------EXEC SYS CALL--------------------------//
+
+alias userSP R0;
+userSP = SP;
+
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 13 ] = SP;
+SP = ([PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 11]*512)-1;
+
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 9 ] = 9;
+
+alias fileName R1;
+fileName = [([PTBR + 2*((userSP-4)/512)])*512 + ((userSP-4)%512)];
+
+alias i R2;
+alias flag R3;
+alias inodeIdx R4;
+
+i = 0;
+flag = 0;
+
+while( i < MAX_FILE_NUM)	do
+	if([INODE_TABLE+(16*i)+1] == fileName )	then
+			flag = 1; 
+			inodeIdx = i;
+			break;
+	endif;
+	i = i + 1;
+endwhile;
+
+if(flag == 0)	then
+	SP = userSP;
+	[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 9 ] = 0;
+	[([PTBR + 2*((userSP-1)/512)])*512 + ((userSP-1)%512)] = -1;
+	ireturn;
+endif;
+
+alias exitPID R5;
+exitPID = [SYSTEM_STATUS_TABLE + 1];	//the same ID will be given to new process
+
+backup;
+R1 = EXIT_PROCESS;
+R2 = [SYSTEM_STATUS_TABLE + 1];
+call MOD_1;					//process manager module
+restore;
+
+alias userAreaPageNo R6;
+userAreaPageNo = [PROCESS_TABLE+([SYSTEM_STATUS_TABLE+1]*16) + 11];
+
+//reclaiming the same user area page
+[MEMORY_FREE_LIST+userAreaPageNo] = [MEMORY_FREE_LIST+userAreaPageNo]+1;
+
+[SYSTEM_STATUS_TABLE + 2] = [SYSTEM_STATUS_TABLE + 2] - 1; 
+
+//Initialising kernal stack of new process by setting SP
+SP = (userAreaPageNo*512)-1;
+
+[PROCESS_TABLE + (16*[SYSTEM_STATUS_TABLE+1]) + 4] = RUNNING;
+[PROCESS_TABLE + (16*[SYSTEM_STATUS_TABLE+1]) + 7] = inodeIdx;
+
+PTBR = PAGE_TABLE_BASE + [SYSTEM_STATUS_TABLE + 1]*20;
+PTLR = 10;
+
+//library
+[PTBR + 0] = 63;
+[PTBR + 1] = "0100";
+[PTBR + 2] = 64;
+[PTBR + 3] = "0100";
+
+//-----------------Stack entries---------------//
+//stack1
+backup;
+R1 = GET_FREE_PAGE;
+call MOD_2;				//memory manager module
+
+[PTBR + 16] = R0;
+[PTBR + 17] = "0110";
+restore;
+
+//stack2
+backup;
+R1 = GET_FREE_PAGE;
+call MOD_2;				//memory manager module
+
+[PTBR + 18] = R0;
+[PTBR + 19] = "0110";
+restore;
+
+//-----------------Heap entries----------------//
+//heap1
+backup;
+R1 = GET_FREE_PAGE;
+call MOD_2; 			//memory manager module
+
+[PTBR + 4] = R0;
+[PTBR + 5] = "0110";
+restore;
+
+//heap2
+backup;	
+R1 = GET_FREE_PAGE;
+call MOD_2; 			//memory manager module
+
+[PTBR + 6] = R0;
+[PTBR + 7] = "0110";
+restore;
+
+
+//--------------------Code pages---------------//
+
+if([INODE_TABLE+(16*inodeIdx) + 8] != -1)	then
+	backup;
+	R1 = GET_FREE_PAGE;
+	call MOD_2;
+
+	[PTBR + 8] = R0;
+	[PTBR + 9] = "0100";
+	restore;
+
+	loadi([PTBR + 8] ,[INODE_TABLE+(16*inodeIdx) + 8]);
+endif;
+
+if([INODE_TABLE+(16*inodeIdx) + 9] != -1)	then
+	backup;
+	R1 = GET_FREE_PAGE;
+	call MOD_2;
+
+	[PTBR + 10] = R0;
+	[PTBR + 11] = "0100";
+	restore;
+
+	loadi([PTBR + 10] ,[INODE_TABLE+(16*inodeIdx) + 9]);
+endif;
+
+if([INODE_TABLE+(16*inodeIdx) + 10] != -1)	then
+	backup;
+	R1 = GET_FREE_PAGE;
+	call MOD_2;
+
+	[PTBR + 12] = R0;
+	[PTBR + 13] = "0100";
+	restore;
+
+	loadi([PTBR + 12] ,[INODE_TABLE+(16*inodeIdx) + 10]);
+endif;
+
+if([INODE_TABLE+(16*inodeIdx) + 11] != -1)	then
+	backup;
+	R1 = GET_FREE_PAGE;
+	call MOD_2;
+
+	[PTBR + 14] = R0;
+	[PTBR + 15] = "0100";
+	restore;
+
+	loadi([PTBR + 14] ,[INODE_TABLE+(16*inodeIdx) + 11]);
+endif;
+
+//-----------------------------------------------------
+
+[[PTBR + 16]*512] = [([PTBR + 8]*512) + 1];	//store entry point of user code to top of the user stack
+SP = 8*512;					//userSP
+
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 9 ] = 0;
+
+ireturn;

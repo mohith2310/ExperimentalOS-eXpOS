@@ -1,0 +1,54 @@
+//--------------------------MEMORY MANAGER MODULE----------------//
+
+alias funNum R1;
+
+if(funNum == GET_FREE_PAGE)		then
+	
+	[SYSTEM_STATUS_TABLE+3] = [SYSTEM_STATUS_TABLE+3] +1;	//wait mem cnt
+
+	//free mem cnt
+	while([SYSTEM_STATUS_TABLE + 2] == 0)	do
+		
+		[PROCESS_TABLE + (16*[SYSTEM_STATUS_TABLE + 1]) + 4] = WAIT_MEM;
+		
+		backup;
+		call MOD_5;
+		restore;
+	endwhile;
+
+	[SYSTEM_STATUS_TABLE + 3] = [SYSTEM_STATUS_TABLE + 3] -1;	//wait mem cnt
+	[SYSTEM_STATUS_TABLE + 2] = [SYSTEM_STATUS_TABLE + 2] -1;	//mem free cnt
+
+	alias i R6;
+	i = 0 ;
+
+	while( i < 128)	do
+		if([MEMORY_FREE_LIST + i] == 0)	then
+			[MEMORY_FREE_LIST + i] = 1;
+			break;
+		endif;
+		i = i+1;
+	endwhile;
+
+	R0 = i;
+
+	return;
+endif;
+
+if(funNum == RELEASE_PAGE)	then
+	alias pageNum R2;
+	[MEMORY_FREE_LIST + pageNum] = [MEMORY_FREE_LIST + pageNum] -1;		
+	if([MEMORY_FREE_LIST + pageNum] == 0)	then
+		[SYSTEM_STATUS_TABLE + 2] = [SYSTEM_STATUS_TABLE + 2] + 1;	//mem free cnt
+
+		alias i R7;
+		i = 0;
+		while(i < 16)	do
+			if( [PROCESS_TABLE + (16*i) + 4] == WAIT_MEM)	then
+				[PROCESS_TABLE + (16*i) + 4] = READY;
+			endif;
+			i = i + 1;
+		endwhile;
+	endif;
+	return;
+endif;

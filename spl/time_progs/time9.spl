@@ -1,0 +1,8 @@
+[PROCESS_TABLE+13]=SP;		//storing SP
+SP=[PROCESS_TABLE+11]*512-1;	//moving to kernal stack
+backup;				//copying user application registers
+print [SYSTEM_STATUS_TABLE+1];	
+
+restore;			//restoring user application registers 
+SP=[PROCESS_TABLE+13];		//pointing to user stack again
+ireturn;

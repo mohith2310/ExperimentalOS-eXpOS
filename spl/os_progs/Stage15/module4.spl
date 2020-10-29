@@ -1,0 +1,28 @@
+//------------------DEVICE MANAGER MODULE---------//
+
+alias funNum R1;
+alias curID R2;
+
+if(funNum == TERMINAL_WRITE )
+then
+	backup;
+
+	R1 = ACQUIRE_TERMINAL;
+	R2 = [SYSTEM_STATUS_TABLE + 1];
+
+	call MOD_0;
+
+	restore;
+
+	print R3;
+
+	backup;
+
+	R1 = RELEASE_TERMINAL;
+	R2 = [SYSTEM_STATUS_TABLE + 1];
+
+	call MOD_0;
+	restore;
+endif;
+
+return;

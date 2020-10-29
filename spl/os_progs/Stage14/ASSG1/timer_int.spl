@@ -1,0 +1,28 @@
+[PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+13] = SP;			//UPTR
+SP = [PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+11]*512-1;	//SP  point to kernal stack
+
+backup;
+
+alias curProEntry R1;
+curProEntry = PROCESS_TABLE+(16*[SYSTEM_STATUS_TABLE+1]);
+
+[curProEntry+4] = READY;
+
+alias cnt R0;
+cnt=0;
+
+while(cnt<16) do
+	if( [PROCESS_TABLE+(cnt*16)+4] != -1 ) then
+		[PROCESS_TABLE+(cnt*16)] = [PROCESS_TABLE+(cnt*16)]+1;
+	endif;
+	cnt=cnt+1;
+endwhile;
+
+call MOD_5;
+
+restore;
+
+SP = [PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+13];
+[PROCESS_TABLE+([SYSTEM_STATUS_TABLE+1]*16)+9] = 0;
+
+ireturn;

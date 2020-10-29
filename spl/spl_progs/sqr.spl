@@ -1,0 +1,6 @@
+alias counter R0;
+counter=1;
+while(counter<=5) do
+	breakpoint;
+counter=counter+1;
+endwhile;

@@ -1,0 +1,26 @@
+[PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE+1] + 4] = TERMINATED;
+
+alias cnt R0;
+alias i R1;
+
+cnt = 0;
+i = 1;
+
+while(i<16)	do
+	if( [PROCESS_TABLE + 16*i + 4] == -1 ) then
+		cnt = cnt+1;
+	endif;
+	i = i+1;
+endwhile;
+
+if(cnt == 15)	then
+	halt;
+endif;
+
+call MOD_5;
+restore;
+
+SP = [PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE+1] + 13];
+[PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE+1] + 9] = 0;
+
+ireturn;

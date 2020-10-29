@@ -1,0 +1,27 @@
+[PROCESS_TABLE + (16*[SYSTEM_STATUS_TABLE + 1]) + 13] = SP;
+SP = ([PROCESS_TABLE + (16*[SYSTEM_STATUS_TABLE+1]) + 11]*512)-1;
+
+backup;
+
+alias reqID R0;
+reqID = [TERMINAL_STATUS_TABLE + 1];
+
+alias req_pro_entry R1;
+req_pro_entry = PROCESS_TABLE + (16*reqID);
+
+breakpoint;
+[req_pro_entry + 8] = P0;
+breakpoint;
+backup;
+
+R1 = RELEASE_TERMINAL;
+R2 = reqID;
+
+call MOD_0;
+
+restore;
+restore;
+
+SP = [PROCESS_TABLE + (16*[SYSTEM_STATUS_TABLE + 1]) + 13];
+
+ireturn;
