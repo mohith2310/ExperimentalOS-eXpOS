@@ -1,0 +1,83 @@
+//-----------------------------PROCESS MANAGER MODULE----------------------//
+alias funNum R1;
+alias curID R2;
+
+if(funNum == FREE_USER_AREA_PAGE)	then
+	alias userAreaPageNo R3;
+	userAreaPageNo = [PROCESS_TABLE + (16*curID) + 11];
+
+	backup;
+	R1 = RELEASE_PAGE;
+	R2 = userAreaPageNo;
+	call MOD_2;
+	restore;
+
+	return;
+endif;
+
+if(funNum == EXIT_PROCESS)	then
+	backup;
+	R1 = FREE_PAGE_TABLE;
+	R2 = curID;
+	call MOD_1;
+	restore;
+
+	backup;
+	R1 = FREE_USER_AREA_PAGE;
+	R2 = curID;
+	call MOD_1;
+	restore;
+
+	[PROCESS_TABLE + (16*curID) + 4] = TERMINATED;
+	return;
+endif;
+
+if(funNum == FREE_PAGE_TABLE)	then
+	PTBR = PAGE_TABLE_BASE + (20*curID);
+
+	[PTBR + 0] = -1;
+	[PTBR + 1] = "0000";
+
+	[PTBR + 2] = -1;
+	[PTBR + 3] = "0000";
+
+	alias i R4;
+	i = 4;
+	while(i <= 19)	do
+		if([PTBR + i] != -1)	then
+			backup;
+			R1 = RELEASE_PAGE;
+			R2 = [PTBR + i];
+			call MOD_2;
+			restore;
+
+			[PTBR + i] = -1;
+			[PTBR + i + 1] = "0000";
+		endif;
+		i = i + 2;
+	endwhile;
+
+	alias diskMap R5;
+	diskMap = DISK_MAP_TABLE + 10*curID;
+
+
+	//removing blocks using disk map table
+	while(i < 10)	do
+		if( ([diskMap+i] != -1) && ((i==2) || (i==3) || (i==8) || (i==9)))	then
+
+			backup;
+
+			R1 = RELEASE_BLOCK;
+			R2 = [diskMap + i];
+
+			call MOD_2;			//MEMORY MANAGER MODULE
+
+			restore;
+		endif;
+		[diskMap + i] = -1;
+		i = i+1;
+	endwhile;
+
+	return;
+endif;
+
