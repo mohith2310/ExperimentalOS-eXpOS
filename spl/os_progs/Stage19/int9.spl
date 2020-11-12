@@ -69,6 +69,21 @@ resourceTable = userAreaPageNo*512 + RESOURCE_TABLE_OFFSET;
 [resourceTable + 2*7] = -1;
 
 
+alias diskMap R12;
+diskMap = DISK_MAP_TABLE + 10 * [SYSTEM_STATUS_TABLE + 1];
+
+[diskMap + 0] = -1;
+[diskMap + 1] = -1;
+[diskMap + 2] = -1;
+[diskMap + 3] = -1;
+[diskMap + 4] = [INODE_TABLE+(16*inodeIdx) + 8];
+[diskMap + 5] = [INODE_TABLE+(16*inodeIdx) + 9];
+[diskMap + 6] = [INODE_TABLE+(16*inodeIdx) + 10];
+[diskMap + 7] = [INODE_TABLE+(16*inodeIdx) + 11];
+[diskMap + 8] = -1;
+[diskMap + 9] = -1;
+
+
 PTBR = PAGE_TABLE_BASE + [SYSTEM_STATUS_TABLE + 1]*20;
 PTLR = 10;
 
@@ -108,6 +123,7 @@ restore;
 
 //--------------------Code pages---------------//
 
+
 if([INODE_TABLE+(16*inodeIdx) + 8] != -1)	then
 	backup;
 	R1 = GET_CODE_PAGE;
@@ -138,21 +154,6 @@ endif;
 [PTBR + 15] = "0000";
 
 //-----------------------------------------------------
-
-alias diskMap R12;
-diskMap = DISK_MAP_TABLE + 10 * [SYSTEM_STATUS_TABLE + 1];
-
-[diskMap + 0] = -1;
-[diskMap + 1] = -1;
-[diskMap + 2] = -1;
-[diskMap + 3] = -1;
-[diskMap + 4] = [INODE_TABLE+(16*inodeIdx) + 8];
-[diskMap + 5] = [INODE_TABLE+(16*inodeIdx) + 9];
-[diskMap + 6] = [INODE_TABLE+(16*inodeIdx) + 10];
-[diskMap + 7] = [INODE_TABLE+(16*inodeIdx) + 11];
-[diskMap + 8] = -1;
-[diskMap + 9] = -1;
-
 
 [[PTBR + 16]*512] = [([PTBR + 8]*512) + 1];	//store entry point of user code to top of the user stack
 SP = 8*512;					//userSP

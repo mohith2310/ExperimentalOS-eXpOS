@@ -3,8 +3,9 @@ load --library $HOME/myexpos/expl/library.lib
 load --exhandler $HOME/myexpos/spl/os_progs/Stage19/exception_handler.xsm
 load --idle $HOME/myexpos/spl/os_progs/Stage19/idle.xsm
 load --init $HOME/myexpos/spl/os_progs/Stage19/shell1.xsm
-load --exec $HOME/myexpos/spl/os_progs/Stage19/linked.xsm
+load --exec $HOME/myexpos/spl/os_progs/Stage19/odd.xsm
 load --exec $HOME/myexpos/spl/os_progs/Stage19/even.xsm
+load --exec $HOME/myexpos/spl/os_progs/Stage19/linked.xsm
 load --module 0 $HOME/myexpos/spl/os_progs/Stage19/module0.xsm
 load --module 1 $HOME/myexpos/spl/os_progs/Stage19/module1.xsm
 load --module 2 $HOME/myexpos/spl/os_progs/Stage19/module2.xsm

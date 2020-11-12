@@ -1,0 +1,81 @@
+//------------------DEVICE MANAGER MODULE-------------//
+
+alias funNum R1;
+alias curID R2;
+
+if(funNum == TERMINAL_WRITE )	then
+	
+	backup;
+
+	R1 = ACQUIRE_TERMINAL;
+	R2 = [SYSTEM_STATUS_TABLE + 1];
+
+	call MOD_0;
+
+	restore;
+
+	print R3;
+
+	backup;
+
+	R1 = RELEASE_TERMINAL;
+	R2 = [SYSTEM_STATUS_TABLE + 1];
+
+	call MOD_0;
+	restore;
+	return;
+endif;
+
+
+if(funNum == TERMINAL_READ)	then
+	backup;
+
+	R1 = ACQUIRE_TERMINAL;
+	R2 = [SYSTEM_STATUS_TABLE + 1];
+
+	call MOD_0;
+
+	restore;
+
+	read;
+
+	[PROCESS_TABLE + (16*[SYSTEM_STATUS_TABLE+1]) + 4] = WAIT_TERMINAL;
+
+	backup;
+	call MOD_5;
+	restore;
+
+	[[PTBR + 2*(R3/512)]*512 + (R3%512)] = [PROCESS_TABLE + (16*[SYSTEM_STATUS_TABLE+1]) + 8];
+
+	return;
+endif;
+	
+
+if(funNum == DISK_LOAD)	then
+	alias pageNum R3;
+	alias blockNum R4;
+
+	backup;
+	R1 = ACQUIRE_DISK;
+	R2 = curID;
+
+	call MOD_0;
+	restore;
+
+	[DISK_STATUS_TABLE + 1] = 0;		//load bit
+	[DISK_STATUS_TABLE + 2] = pageNum;	
+	[DISK_STATUS_TABLE + 3] = blockNum;
+
+	load(pageNum,blockNum);
+
+	[PROCESS_TABLE + (16*curID) + 4] = WAIT_DISK;
+
+	backup;
+	call MOD_5;
+	restore;
+
+	return;
+endif;
+
+return;
+
