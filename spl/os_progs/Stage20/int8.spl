@@ -1,4 +1,4 @@
-//------------------------------------FORK SYS CALL---------//
+//---------------------FORK SYS CALL---------//
 
 [PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE + 1] + 9] = 8;
 

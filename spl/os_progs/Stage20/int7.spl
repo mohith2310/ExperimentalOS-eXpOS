@@ -1,3 +1,5 @@
+//----------------------WRITE SYS CALL--------------------//
+
 [PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+9]=5;         //MODE_FLAG
 alias userSP R0;
 userSP = SP;
