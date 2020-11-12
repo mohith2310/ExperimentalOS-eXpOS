@@ -1,0 +1,21 @@
+[PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+13] = SP;		//UPTR
+SP = [PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+11]*512-1;	//SP point to kernal stack
+backup;
+
+alias reqPID R0;
+reqPID = [TERMINAL_STATUS_TABLE + 1];
+
+[PROCESS_TABLE + 16*reqPID + 8] = P0;   //P0 port value is assigned to Input buffer
+
+//.......Release Terminal.......
+
+R1 = 9;     //funcNo
+R2 = reqPID;    //PID
+
+multipush(R0,R1,R2);
+call RESOURCE_MANAGER;
+multipop(R0,R1,R2);
+
+restore;
+SP = [PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+13];	//User_SP
+ireturn;

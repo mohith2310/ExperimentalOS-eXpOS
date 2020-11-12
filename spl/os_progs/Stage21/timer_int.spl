@@ -1,0 +1,23 @@
+[PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+13] = SP;		//UPTR
+SP = [PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+11]*512-1;	//SP point to kernal stack
+backup;
+
+[PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+4] = READY;
+
+//Tick Field
+
+alias i R0;
+i=0;
+while(i<16) do
+ if([PROCESS_TABLE+16*i+4]!=TERMINATED) then
+  [PROCESS_TABLE+16*i] = [PROCESS_TABLE+16*i] + 1;
+ endif;  
+ i = i+1; 
+endwhile;
+
+call SCHEDULER;
+
+restore;
+SP = [PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+13];	//User_SP
+[PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+9] = 0;  	//MODE_FLAG
+ireturn;

@@ -1,0 +1,51 @@
+
+alias currPid R1;
+currPid = [SYSTEM_STATUS_TABLE+1];
+multipush (BP);
+
+[PROCESS_TABLE+16*currPid+12] = SP%512;	//KPTR
+[PROCESS_TABLE+16*currPid+14] = PTBR;	
+[PROCESS_TABLE+16*currPid+15] = PTLR;
+
+//..........................Round Robin Algo..................//
+alias newPid R2;
+newPid = currPid;
+
+while(1==1) do
+ newPid = (newPid + 1)%16;
+
+ if(newPid==currPid) then
+  newPid = 0;	//idle
+  break;
+ endif;
+
+ if(newPid==0) then
+  continue;
+ endif;
+
+ if([PROCESS_TABLE+16*newPid+4]==CREATED || [PROCESS_TABLE+16*newPid+4]==READY) then
+  break;
+ endif; 
+
+endwhile;
+
+//...........................................................//
+
+SP = [PROCESS_TABLE+16*newPid+11]*512 + [PROCESS_TABLE+16*newPid+12];
+PTBR = [PROCESS_TABLE+16*newPid+14];
+PTLR = [PROCESS_TABLE+16*newPid+15];
+[SYSTEM_STATUS_TABLE+1] = newPid;
+
+if([PROCESS_TABLE + 16*newPid + 4] == CREATED) then
+
+    SP = [PROCESS_TABLE + 16*newPid + 13];	//UPTR
+    BP = [[PROCESS_TABLE + 16*newPid + 11]*512];
+    [PROCESS_TABLE + 16*newPid + 4] = RUNNING; //State
+    [PROCESS_TABLE + 16*newPid + 9] = 0; 	//MODE_Field
+    ireturn;
+
+endif;
+
+[PROCESS_TABLE+16*newPid+4] = RUNNING;
+multipop (BP);
+return;

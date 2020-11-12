@@ -1,0 +1,61 @@
+//------------------------RESOURCE MANAGER MODULE---------------
+alias funcNo R1;
+alias currPid R2;
+
+if(funcNo==ACQUIRE_DISK) then
+
+    while([DISK_STATUS_TABLE]==1) do
+
+        [PROCESS_TABLE+16*currPid+4] = WAIT_DISK;
+        backup;
+        call SCHEDULER;
+        restore;
+
+    endwhile;
+
+    [DISK_STATUS_TABLE] = 1;
+    [DISK_STATUS_TABLE+4] = currPid;
+
+    return;
+endif;
+
+//.....Acquire Terminal.....
+if(funcNo == ACQUIRE_TERMINAL) then
+    while([TERMINAL_STATUS_TABLE]==1) do
+        [PROCESS_TABLE+16*currPid+4] = WAIT_TERMINAL;
+        //......calling scheduler
+        backup;
+        call SCHEDULER;
+        restore;
+
+    endwhile;
+
+    [TERMINAL_STATUS_TABLE] = 1;	//Status
+    [TERMINAL_STATUS_TABLE+1] = currPid;
+
+    return;
+endif;
+
+//....Release Terminal.....
+alias ret R0;
+if(funcNo == RELEASE_TERMINAL) then
+    if(currPid!=[TERMINAL_STATUS_TABLE+1]) then
+        ret = -1;
+        return;
+    endif;
+
+    [TERMINAL_STATUS_TABLE] = 0;
+    alias i R5;
+    i=0;
+    while(i<16) do
+        if([PROCESS_TABLE+16*i+4]==WAIT_TERMINAL) then
+            [PROCESS_TABLE+16*i+4] = READY;
+            endif;
+        i = i+1;
+    endwhile;
+
+    ret = 0;
+
+    return;
+endif;
+
