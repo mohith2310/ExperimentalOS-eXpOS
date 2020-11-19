@@ -4,7 +4,7 @@ currPid = [SYSTEM_STATUS_TABLE+1];
 multipush (BP);
 
 [PROCESS_TABLE+16*currPid+12] = SP%512;	//KPTR
-[PROCESS_TABLE+16*currPid+14] = PTBR;	
+[PROCESS_TABLE+16*currPid+14] = PTBR;
 [PROCESS_TABLE+16*currPid+15] = PTLR;
 
 //..........................Round Robin Algo..................//
@@ -25,9 +25,14 @@ while(1==1) do
 
  if([PROCESS_TABLE+16*newPid+4]==CREATED || [PROCESS_TABLE+16*newPid+4]==READY) then
   break;
- endif; 
+ endif;
 
 endwhile;
+
+//number of context Switches
+if(currPid != newPid) then
+  [70*512 + 509] = [70*512 + 509]+1;
+endif;
 
 //...........................................................//
 

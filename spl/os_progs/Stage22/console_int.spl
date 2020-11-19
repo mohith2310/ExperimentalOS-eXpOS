@@ -1,3 +1,6 @@
+//number of kernel mode switch
+[70*512 + 511] = [70*512+511] + 1;
+
 [PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+13] = SP;		//UPTR
 SP = [PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+11]*512-1;	//SP point to kernal stack
 backup;

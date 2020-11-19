@@ -1,4 +1,6 @@
 //---------------------FORK SYS CALL---------//
+//number of kernel mode switch
+[70*512 + 511] = [70*512+511] + 1;
 
 [PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE + 1] + 9] = 8;
 
@@ -136,7 +138,7 @@ endwhile;
 
 //COPY PARENT PERPROCESS DISK MAP TABLE TO CHILD
 i = 0;
-while(i < 10)	do 
+while(i < 10)	do
 	[DISK_MAP_TABLE + 10*childPID + i] = [DISK_MAP_TABLE + 10*[SYSTEM_STATUS_TABLE+1] + i];
 
 	i = i+1;

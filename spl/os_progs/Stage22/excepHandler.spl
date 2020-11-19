@@ -1,3 +1,6 @@
+//number of kernel mode switch
+[70*512 + 511] = [70*512+511] + 1;
+
 [PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE+1] + 9] = -1;  	//MODE_FLAG
 
 [PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+13] = SP;		//UPTR

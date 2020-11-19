@@ -1,4 +1,6 @@
 //----------------------WRITE SYS CALL--------------------//
+//number of kernel mode switch
+[70*512 + 511] = [70*512+511] + 1;
 
 [PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+9]=5;         //MODE_FLAG
 alias userSP R0;

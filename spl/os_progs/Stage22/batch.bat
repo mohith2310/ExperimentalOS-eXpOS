@@ -1,13 +1,13 @@
 load --os $HOME/myexpos/spl/os_progs/Stage22/os_start.xsm
 load --library $HOME/myexpos/expl/library.lib
-load --exhandler $HOME/myexpos/spl/os_progs/Stage22/excep_handler.xsm
+load --exhandler $HOME/myexpos/spl/os_progs/Stage22/excepHandler.xsm
 load --idle $HOME/myexpos/spl/os_progs/Stage22/idle.xsm
-load --init $HOME/myexpos/spl/os_progs/Stage22/init.xsm
+load --init $HOME/myexpos/spl/os_progs/Stage22/shell2.xsm
 load --exec $HOME/myexpos/spl/os_progs/Stage22/assg1.xsm
 load --exec $HOME/myexpos/spl/os_progs/Stage22/parent.xsm
 load --exec $HOME/myexpos/spl/os_progs/Stage22/child.xsm
-load --exec $HOME/myexpos/spl/os_progs/Stage22/temp1.xsm
-load --exec $HOME/myexpos/spl/os_progs/Stage22/temp2.xsm
+load --exec $HOME/myexpos/spl/os_progs/Stage22/3seq.xsm
+load --exec $HOME/myexpos/spl/os_progs/Stage22/3con.xsm
 load --exec $HOME/myexpos/spl/os_progs/Stage22/odd.xsm
 load --exec $HOME/myexpos/spl/os_progs/Stage22/linked.xsm
 load --module 0 $HOME/myexpos/spl/os_progs/Stage22/module0.xsm

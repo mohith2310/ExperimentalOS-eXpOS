@@ -129,8 +129,8 @@ while(i < 10)	do
 	i = i+1;
 endwhile;
 
-[DISK_MAP_TABLE + 10 + 4] = 65;
-[DISK_MAP_TABLE + 10 + 5] = 66;
+[DISK_MAP_TABLE + 10 + 4] = 7;
+[DISK_MAP_TABLE + 10 + 5] = 8;
 
 //init process 1
 PTBR = PAGE_TABLE_BASE+20;
@@ -209,5 +209,11 @@ while(i < 16)	do
 endwhile;
 
 PTBR = PAGE_TABLE_BASE;
+
+//counts
+[70*512 + 508] = 0;	//Disk Access
+[70*512 + 509] = 0;	//Context Switches
+[70*512 + 510] = (128-45);	//Max memory usage
+[70*512 + 511] = 0;	//Switch to kernel mode
 
 return;

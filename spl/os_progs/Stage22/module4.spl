@@ -16,6 +16,7 @@ if(funcNo==DISK_LOAD) then
     [DISK_STATUS_TABLE+2] = R3; //page_number
     [DISK_STATUS_TABLE+3] = R4; //block_number
 
+    [70*512 + 508] = [70*512 + 508] + 1;
     load(R3,R4);
 
     [PROCESS_TABLE+16*currPid+4] = WAIT_DISK;
@@ -29,9 +30,9 @@ if(funcNo==DISK_LOAD) then
 endif;
 
 if(funcNo == TERMINAL_WRITE) then      //Terminal Write
-    
+
     //......calling Acquire Terminal
-    
+
     multipush(R1,R2,R3);
 
     R1 = 8;
@@ -85,4 +86,3 @@ if(funcNo == TERMINAL_READ) then      //Terminal Read
 
     return;
 endif;
-

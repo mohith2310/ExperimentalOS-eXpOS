@@ -8,14 +8,14 @@ if(funcNo == RELEASE_BLOCK) then
 endif;
 
 if(R1 == GET_CODE_PAGE) then
-	
+
         //backup;
 	alias block_num R2;	//R2 contains block num
 	alias i R3;
 	alias block R4;
 	alias page_num R0;
 
-	// IF WE GET A PAGE WHICH IS ALREADY PRESENT IN MEMORY	
+	// IF WE GET A PAGE WHICH IS ALREADY PRESENT IN MEMORY
 	i = 0;
 	while(i < 16) do
 		block = 4;
@@ -26,8 +26,8 @@ if(R1 == GET_CODE_PAGE) then
                 return;
 			endif;
 			block = block + 1;
-		endwhile;		
-	i = i+1;	
+		endwhile;
+	i = i+1;
 	endwhile;
 
 	// IF NO FREE PAGE IS PRESENT AT MOMENT
@@ -81,6 +81,10 @@ if(R1 == GET_FREE_PAGE)then
     [SYSTEM_STATUS_TABLE+3] = [SYSTEM_STATUS_TABLE+3]-1;    //WAIT_MEM_COUNT
     [SYSTEM_STATUS_TABLE+2] = [SYSTEM_STATUS_TABLE+2]-1;    //MEM_FREE_COUNT
 
+    //max mem count
+    if([70*512 + 510] < (128-[SYSTEM_STATUS_TABLE+2]))  then
+      [70*512 + 510] = (128-[SYSTEM_STATUS_TABLE+2]);
+    endif;
     alias i R3;
     i = 76;
 

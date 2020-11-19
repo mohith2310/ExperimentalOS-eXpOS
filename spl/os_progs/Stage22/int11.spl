@@ -1,4 +1,6 @@
 //----------WAIT | SIGNAL | GETPID | GETPPID---------------//
+//number of kernel mode switch
+[70*512 + 511] = [70*512+511] + 1;
 
 alias userSP 	R0;
 alias sysCalNum R1;
@@ -48,7 +50,7 @@ if(sysCalNum == 13)	then
 
 		[PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+9] = 0;
 		SP = userSP;
-		
+
 		ireturn;
 	endif;
 

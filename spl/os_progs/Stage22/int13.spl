@@ -1,4 +1,6 @@
 //--------------------SEMGET | SEMRELEASE-----------------//
+//number of kernel mode switch
+[70*512 + 511] = [70*512+511] + 1;
 
 alias userSP 		R0;
 alias sysCalNum 	R1;
@@ -79,7 +81,7 @@ endif;
 
 //-------------------SEM RELEASE-------------------
 if(sysCalNum == 18)	then
-	[PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1] + 9] = sysCalNum;	
+	[PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1] + 9] = sysCalNum;
 
 	UAPage = [PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+11];
 
@@ -91,7 +93,7 @@ if(sysCalNum == 18)	then
 
 		[PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE+1] + 9] = 0;
 		SP = userSP;
-		
+
 		ireturn;
 	endif;
 

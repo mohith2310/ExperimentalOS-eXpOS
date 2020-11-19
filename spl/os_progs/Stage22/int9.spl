@@ -1,4 +1,6 @@
 //---------------------------------EXEC SYS CALL-------------------------------//
+//number of kernel mode switch
+[70*512 + 511] = [70*512+511] + 1;
 
 alias userSP R0;
 userSP = SP;
@@ -54,6 +56,11 @@ user_area_page = [PROCESS_TABLE + 16*exitPid + 11];
 
 [MEMORY_FREE_LIST + user_area_page] = [MEMORY_FREE_LIST + user_area_page] + 1;
 [SYSTEM_STATUS_TABLE+2] = [SYSTEM_STATUS_TABLE+2]-1;
+
+//  Max Mem Count
+if([70*512 + 510] < (128 - [SYSTEM_STATUS_TABLE + 2])) then
+		[70*512 + 510] = (128 - [SYSTEM_STATUS_TABLE + 2]);
+endif;
 
 SP = user_area_page*512-1;
 
@@ -158,5 +165,5 @@ SP = 8*512;
 
 [PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE+1]+9] = 0; //MODE_FLAG
 
-breakpoint;
+
 ireturn;

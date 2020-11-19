@@ -17,6 +17,7 @@ begin
             endif;
             if(pid != 0) then
                 temp = exposcall("Wait",pid);
+                breakpoint;
             else
                 temp = exposcall("Exec",input);
                 if(temp != 0) then
