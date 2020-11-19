@@ -74,8 +74,7 @@ if(sysCalNum == 14)	then
 
 	i=0;
 	while(i < 16)	do
-		if(([PROCESS_TABLE + 16*i + 4] == WAIT_PROCESS) &&
-		([PROCESS_TABLE + 16*i + 5] == [SYSTEM_STATUS_TABLE+1]))	then
+		if(([PROCESS_TABLE + 16*i + 4] == WAIT_PROCESS) && ([PROCESS_TABLE + 16*i + 5] == [SYSTEM_STATUS_TABLE+1]))	then
 			[PROCESS_TABLE+16*i+4] = READY;
 		endif;
 		i = i+1;

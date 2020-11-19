@@ -2,7 +2,7 @@ load --os $HOME/myexpos/spl/os_progs/Stage21/os_start.xsm
 load --library $HOME/myexpos/expl/library.lib
 load --exhandler $HOME/myexpos/spl/os_progs/Stage21/excep_handler.xsm
 load --idle $HOME/myexpos/spl/os_progs/Stage21/idle.xsm
-load --init $HOME/myexpos/spl/os_progs/Stage21/assg2.xsm
+load --init $HOME/myexpos/spl/os_progs/Stage21/assg1.xsm
 load --exec $HOME/myexpos/spl/os_progs/Stage21/odd.xsm
 load --exec $HOME/myexpos/spl/os_progs/Stage21/pid.xsm
 load --exec $HOME/myexpos/spl/os_progs/Stage21/even.xsm
