@@ -2,12 +2,12 @@
 //number of kernel mode switch
 [70*512 + 511] = [70*512+511] + 1;
 
-alias userSP 				R0;
-alias sys_call_no 			R1;
+alias userSP			 					R0;
+alias sys_call_no 					R1;
 alias semaphore_descriptor 	R2;
-alias userAreaPageNo 		R3;
+alias userAreaPageNo 				R3;
 alias semaphore_table_index R4;
-alias i 					R5;
+alias i 										R5;
 
 userSP = SP;
 
@@ -68,7 +68,6 @@ if(sys_call_no==19) then  //SEM-LOCK system call
 	[([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512)] = 0;
 
 	ireturn;
-
 endif;
 
 if(sys_call_no==20) then //SEM_UNLOCK system call
@@ -80,8 +79,7 @@ if(sys_call_no==20) then //SEM_UNLOCK system call
 
 	userAreaPageNo = [PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+11];
 
-	if(semaphore_descriptor<0 || semaphore_descriptor>=8 ||
-		[userAreaPageNo*512 + (semaphore_descriptor * 2 + 496)]!=1) then
+	if(semaphore_descriptor<0 || semaphore_descriptor>=8 || [userAreaPageNo*512 + (semaphore_descriptor * 2 + 496)]!=1) then
 
 		//Setting return value as -1 (Failure)
 		[([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512)] = -1;
@@ -118,16 +116,14 @@ if(sys_call_no==20) then //SEM_UNLOCK system call
 
 		i=0;
 		while(i<=15) do
-			if([PROCESS_TABLE+16*i+4]==WAIT_SEMAPHORE &&
-				[PROCESS_TABLE+16*i+5]==semaphore_table_index) then
+			if([PROCESS_TABLE+16*i+4]==WAIT_SEMAPHORE && [PROCESS_TABLE+16*i+5]==semaphore_table_index) then
 
 				[PROCESS_TABLE+16*i+4]=READY;
 
 			endif;
 			i=i+1;
+
 		endwhile;
-
-
 	endif;
 
 	//Changing back to user stack and return to user mode

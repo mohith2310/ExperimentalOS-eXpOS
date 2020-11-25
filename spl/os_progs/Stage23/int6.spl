@@ -1,0 +1,47 @@
+//-----------------READ SYS CALL----------------------//
+//number of kernel mode switch
+[70*512 + 511] = [70*512+511] + 1;
+
+[PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE+1]+9] = 7;     //MODE_FLAG
+
+alias userSP R0;
+userSP = SP;
+
+[PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE+1]+13] = SP;   //UPTR
+SP = [PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE+1]+11]*512 - 1;
+
+// checking for file descripter
+alias fileDisc R1;
+fileDisc = [[PTBR+2*((userSP-4)/512)]*512+(userSP-4)%512];
+
+if(fileDisc!=-1)
+then
+	// set return val = -1 file disc invalid
+	alias retVal R5;
+	retVal = ([PTBR+2*((userSP-1)/512)]*512)+((userSP-1)%512);
+	[retVal] = -1;
+
+else
+    alias word_add R3;
+    word_add = [[PTBR+2*((userSP-3)/512)]*512+(userSP-3)%512];
+
+    multipush (R0,R1,R2,R3,R4,R5);
+
+    R1 = TERMINAL_READ;
+    R2 = [SYSTEM_STATUS_TABLE+1];
+    R3 = word_add;
+
+    call DEVICE_MANAGER;
+
+    multipush (R0,R1,R2,R3,R4,R5);
+
+    // set return val = 0 for success
+	alias retVal R5;
+	retVal = ([PTBR+2*((userSP-1)/512)]*512)+((userSP-1)%512);
+	[retVal] = 0;
+endif;
+
+[PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE+1]+9] = 0;     //MODE_FLAG
+
+SP = userSP;
+ireturn;
