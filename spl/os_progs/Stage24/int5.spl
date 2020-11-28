@@ -1,0 +1,126 @@
+/////////////// OPEN, CLOSE SYSTEM CALLS /////////////////////
+/////////////////////////////////////////////////////////////////
+
+alias userSP R0;
+alias sys_call_no R1;
+alias ret R2;
+alias filename R3;
+alias userAreaPageNo R4;
+alias i R5;
+alias PPRT_index R6;
+alias open_file_table_entry R7;
+alias file_desc R8;
+alias inode_index R9;
+alias lseek R10;
+alias file_size R11;
+alias offset R12;
+alias proTableEntry R13;
+
+proTableEntry = PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16);
+
+userSP = SP;
+
+[proTableEntry + 13] = SP; //Saving sp value in UPTR field
+SP = [proTableEntry + 11] * 512 - 1; //Setting up kernel stack
+
+//accessing the System call number from user stack(Since system call number is before arg 1 it is at (sp-5))
+
+sys_call_no=[([PTBR + 2 * ((userSP - 5)/ 512)] * 512) + (userSP - 5) % 512];
+
+//Return address
+ret = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+
+//.........................................
+
+if(sys_call_no==INT_OPEN) then
+
+	filename = [([PTBR + 2 * ((userSP - 4)/ 512)] * 512) + (userSP - 4) % 512];
+
+	[proTableEntry + 9] = 2;
+	userAreaPageNo = [proTableEntry+11];
+	PPRT_index = -1;
+	i=496;
+	while(i<512) do
+		if([userAreaPageNo*512+i]==-1) then
+			PPRT_index=(i-496)/2;
+			break;
+		endif;
+		i=i+2;
+	endwhile;
+
+	//If no free per-process-resource-table entry is found
+	if(PPRT_index==-1) then
+		[ret] = -3;
+
+		[proTableEntry + 9] = 0;
+
+		SP = userSP;
+		ireturn;
+	endif;
+
+	multipush(R0,R1,R2,R3,R4,R5,R6);
+		R1=OPEN;
+		R2=filename;
+		call MOD_3;
+		open_file_table_entry = R0;
+	multipop(R0,R1,R2,R3,R4,R5,R6);
+
+	if(open_file_table_entry==-1 || open_file_table_entry==-2) then
+		[ret] = open_file_table_entry;
+		[proTableEntry + 9] = 0;
+		SP = userSP;
+		ireturn;
+	endif;
+
+	[userAreaPageNo*512+(2*PPRT_index+496)] = FILE;
+	[userAreaPageNo*512+(2*PPRT_index+496)+1] = open_file_table_entry;
+
+	[proTableEntry + 9] = 0;
+	SP = userSP;
+
+	[ret] = PPRT_index;
+	ireturn;
+
+endif;
+
+//...............................................
+if(sys_call_no==INT_CLOSE) then
+
+	PPRT_index = [([PTBR + 2 * ((userSP - 4)/ 512)] * 512) + (userSP - 4) % 512];
+	[proTableEntry + 9] = 3;
+
+	if(PPRT_index<0 || PPRT_index>7) then
+		[ret] = -1;
+
+		[proTableEntry + 9] = 0;
+
+		SP = userSP;
+		ireturn;
+	endif;
+
+	userAreaPageNo = [proTableEntry+11];
+
+	if([userAreaPageNo*512+(PPRT_index*2+496)]!=FILE || [userAreaPageNo*512+(PPRT_index*2+496)]==-1) then
+
+		[ret] = -1;
+
+		[proTableEntry + 9] = 0;
+
+		SP = userSP;
+		ireturn;
+	endif;
+
+	open_file_table_entry = [userAreaPageNo*512+(PPRT_index*2+496)+1];
+
+	backup;
+		R1=CLOSE;
+		R2=open_file_table_entry;
+		call MOD_3;
+	restore;
+
+	[userAreaPageNo*512+(PPRT_index*2+496)]=-1;
+	[proTableEntry + 9] = 0;
+	SP = userSP;
+	[ret] = 0;
+	ireturn;
+endif;

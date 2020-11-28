@@ -1,0 +1,167 @@
+//////////////////////////////////// READ SYSTEM CALL //////////////////////////////////
+
+//set mode flag of cureent process to 7(read system call)
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 7;
+
+//save user stack pointer
+alias userSP R0;
+userSP=SP;
+
+//switch to kernel stack
+[PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP;
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1;
+
+alias fileDescriptor R4;
+fileDescriptor=[[PTBR + 2*((userSP-4)/512)]*512 + (userSP-4)%512];
+
+alias ret R5;
+ret = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+
+//checking whether file descriptor is valid or not
+if(fileDescriptor!=-1) then
+
+	if(fileDescriptor<0 || fileDescriptor>7) then
+		[ret]=-1;
+		SP = userSP;
+		[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+		ireturn;
+	endif;
+
+	alias user_area_page R6;
+	user_area_page = [PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+11];
+	if([user_area_page*512 + 496 + fileDescriptor*2]==-1 ||
+		[user_area_page*512 + 496 + fileDescriptor*2]!=FILE) then
+		[ret]=-1;
+		SP = userSP;
+		[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+		ireturn;
+	endif;
+
+	alias open_file_index R7;
+	open_file_index = [user_area_page*512 + 496 + fileDescriptor*2 +1];
+
+	alias inodeIdx R8;
+	inodeIdx = [OPEN_FILE_TABLE + 4*open_file_index + 0];
+
+	backup;
+	R1=ACQUIRE_INODE;
+	R2=[SYSTEM_STATUS_TABLE+1];
+	R3=inodeIdx;
+	call MOD_0;
+
+	if(R0==-1) then
+		restore;
+		[ret]=-1;
+		SP = userSP;
+		[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+		ireturn;
+	endif;
+	restore;
+
+	alias lseek R9;
+	lseek = [OPEN_FILE_TABLE + 4*open_file_index + 2];
+
+	alias word R10;
+	word = [[PTBR + 2 * ((userSP - 3) / 512)] * 512 + ((userSP - 3) % 512)];
+
+	alias addr R11;
+
+	addr = (([PTBR + 2 * ((word)/ 512)]) * 512) + ((word) % 512);
+
+	if(inodeIdx==INODE_ROOT) then
+		if(lseek==480) then
+			backup;
+			R1=5;
+			R2=[SYSTEM_STATUS_TABLE + 1];
+			R3=inodeIdx;
+			call MOD_0;
+			restore;
+
+			[ret]=-2;
+			SP = userSP;
+			[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+			ireturn;
+		endif;
+
+		[addr] = [ROOT_FILE + lseek];
+		[OPEN_FILE_TABLE + 4*open_file_index + 2] = [OPEN_FILE_TABLE + 4*open_file_index + 2]+1;
+
+	else
+		alias file_size R12;
+		file_size = [INODE_TABLE + 16*inodeIdx + 2];
+
+		if(lseek==file_size) then
+
+			backup;
+			R1=RELEASE_INODE;
+			R2=[SYSTEM_STATUS_TABLE + 1];
+			R3=inodeIdx;
+			call MOD_0;
+			restore;
+
+			[ret]=-2;
+			SP = userSP;
+			[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+			ireturn;
+
+		endif;
+
+		alias block_no R13;
+		block_no = [INODE_TABLE+16*inodeIdx+8+(lseek/512)];
+
+		alias new_offset R14;
+		new_offset = lseek%512;
+
+		backup;
+		R1=BUFFERED_READ;
+		R2=block_no;
+		R3=new_offset;
+		R4=addr;
+		call MOD_3;
+		restore;
+
+		[OPEN_FILE_TABLE + 4*open_file_index + 2] = [OPEN_FILE_TABLE + 4*open_file_index + 2]+1;
+
+		backup;
+		R1=RELEASE_INODE;
+		R2=[SYSTEM_STATUS_TABLE + 1];
+		R3=inodeIdx;
+
+		call MOD_0;
+		restore;
+
+		[ret]=0;
+		SP = userSP;
+		[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+		ireturn;
+
+	endif;
+
+else
+	//if valid get the word from stack and call device manager module(module 4)
+	alias word R5;
+	word = [[PTBR + 2 * ((userSP - 3) / 512)] * 512 + ((userSP - 3) % 512)];
+
+	multipush(R0, R1, R2, R3, R4, R5, R6, R7);
+
+	//passing arguments
+
+	R1=TERMINAL_READ; //System call number of Terminal read in device manager module
+	R2=[SYSTEM_STATUS_TABLE + 1];
+	R3=word; //address where the word read should be stored
+
+	call MOD_4;//calling device manager module (module 4)
+	//reads the word(writing it instead of "read word;")
+
+	multipop(R0, R1, R2, R3, R4, R5, R6, R7);
+
+	alias ret R6;
+	ret = ([PTBR + 2 * (userSP - 1)/ 512] * 512) + ((userSP - 1) % 512);
+	[ret] = 0; //storing return value(0 for success)
+
+endif;
+
+SP = userSP;
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+
+ireturn;
