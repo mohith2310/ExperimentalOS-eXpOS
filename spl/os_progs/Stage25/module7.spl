@@ -1,0 +1,225 @@
+loadi(65,7); //init
+loadi(66,8);
+
+loadi(2,15); //excep handler
+loadi(3,16);
+
+loadi(63,13); //library
+loadi(64,14);
+
+loadi(10, 23);	//INT_4
+loadi(11, 24);
+
+loadi(12,25);	//INT_5
+loadi(13,26);
+
+loadi(14,27);   //INT_6 read int
+loadi(15,28);
+
+loadi(16,29);   //INT_7 write int
+loadi(17,30);
+
+loadi(18,31);   //INT_8 fork int
+loadi(19,32);
+
+loadi(20,33);   //INT_9 exec_int
+loadi(21,34);
+
+loadi(22, 35);  //INT_10 exit_int
+loadi(23, 36);
+
+loadi(24,37);	//INT_11 
+loadi(25,38);
+
+loadi(28, 41);	//INT_13
+loadi(29, 42);
+
+loadi(30, 43);	//INT_14
+loadi(31, 44);
+
+loadi(32,45);	//INT_15 shutdown
+loadi(33,46);
+
+loadi(4,17);    //timer int
+loadi(5,18);
+
+loadi(8,21);    //console int
+loadi(9,22);
+
+loadi(6,19);    //disk_control_int
+loadi(7,20);
+
+loadi(40,53);   //MOD0 resource_manager_mod
+loadi(41,54);
+
+loadi(42,55);   //MOD1 process_man_mod
+loadi(43,56);
+
+loadi(44,57);   //MOD2 memory_man_mod
+loadi(45,58);
+
+loadi(46,59);	//MOD3 file_manager_mod
+loadi(47,60);
+
+loadi(48,61);   //MOD4 device_manager_mod
+loadi(49,62);
+
+loadi(50,63);   //MOD5 Shedular_module
+loadi(51,64);
+
+loadi(59,3);    //inode_user_table
+loadi(60,4);
+
+loadi(61,2);    //disk_free_list
+
+loadi(62, 5);  // root_file
+
+
+//----------------------PAGE_TABLE Entry for INIT process PID=1----------------------//
+
+PTBR = PAGE_TABLE_BASE+20;
+PTLR=10;
+
+//.....library.......//
+[PTBR+0]= 63;
+[PTBR+1]= "0100";
+[PTBR+2]= 64;
+[PTBR+3]= "0100";
+
+
+//.....Heap........//
+[PTBR+4]= 78;
+[PTBR+5]= "0110";
+[PTBR+6]= 79;
+[PTBR+7]= "0110";
+
+
+//.....code.......//
+[PTBR+8]=65;
+[PTBR+9]="0100";
+[PTBR+10]=66;
+[PTBR+11]="0100";
+[PTBR+12]=-1;
+[PTBR+13]="0000";
+[PTBR+14]=-1;
+[PTBR+15]="0000";
+
+
+//.......stack.......//
+[PTBR+16]=76;
+[PTBR+17]="0110";
+[PTBR+18]=77;
+[PTBR+19]="0110";
+
+[76*512] = [65*512+1];
+
+//---------------------------------PROCESS_TABLE Entry---------------------------------
+
+[PROCESS_TABLE + 16 + 0] = 0; 	                        //TICK
+[PROCESS_TABLE + 16 + 1] = 1;                           //PID
+[PROCESS_TABLE + 16 + 3] = ROOT;                        //USER_ID
+[PROCESS_TABLE + 16 + 4] = CREATED;                     //STATE
+[PROCESS_TABLE + 16 + 11] = 80;                         //USER_AREA_PAGE
+[PROCESS_TABLE + 16 + 13] = 8*512;                      //UPTR
+[PROCESS_TABLE + 16 + 12] = 0;                          //KPTR
+[PROCESS_TABLE + 16 + 14] = PAGE_TABLE_BASE+20;         //PTBR
+[PROCESS_TABLE + 16 + 15] = 10;                         //PTLR
+
+alias i R1;
+
+//---------------------PER_PROCESS_RESOURCE_TABLE entry for INIT---------------------//
+
+alias resource_table R2;
+resource_table = 80*512 + RESOURCE_TABLE_OFFSET;
+
+i = 0;
+while(i < 8) do
+    [resource_table + 2*i] = -1;
+    i = i + 1;
+endwhile; 
+
+//-------------------------------DISK_MAP_TABLE for init-------------------------------
+
+[DISK_MAP_TABLE + 10 + 0] = -1;
+[DISK_MAP_TABLE + 10 + 1] = -1;
+[DISK_MAP_TABLE + 10 + 2] = -1;
+[DISK_MAP_TABLE + 10 + 3] = -1;
+[DISK_MAP_TABLE + 10 + 4] = 7;
+[DISK_MAP_TABLE + 10 + 5] = 8;
+[DISK_MAP_TABLE + 10 + 6] = -1;
+[DISK_MAP_TABLE + 10 + 7] = -1;
+[DISK_MAP_TABLE + 10 + 8] = -1;
+[DISK_MAP_TABLE + 10 + 9] = -1;
+
+//-----------------------------SEMAPHORE_TABLE intialise-----------------------------//
+
+i = 0;
+
+while(i < MAX_SEM_COUNT) do
+
+    [SEMAPHORE_TABLE + 4*i] = -1;           //LOCKING_PID
+    [SEMAPHORE_TABLE + 4*i + 1] = 0;        //PROCESS_COUNT
+    i = i + 1;
+endwhile;
+
+//-----------------------------OPEN_FILE_TABLE intialise-----------------------------//
+
+i = 0;
+
+while(i < MAX_OPENFILE_NUM) do
+    [OPEN_FILE_TABLE + 4*i] = -1;           //INODE_INDEX
+    [OPEN_FILE_TABLE + 4*i + 1] = 0;        //OPEN_INSTANCE_COUNT
+    i = i + 1;
+endwhile;
+
+//-----------------------------------MEMORY_FREE_LIST-----------------------------------
+
+i = 0;
+while(i < 83) do
+    [MEMORY_FREE_LIST + i] = 1;
+    i = i + 1;
+endwhile;
+
+while(i < 128) do
+    [MEMORY_FREE_LIST + i] = 0;
+    i = i + 1;
+endwhile;
+
+[SYSTEM_STATUS_TABLE + 3] = 0;    //WAIT_MEM_COUNT
+[SYSTEM_STATUS_TABLE + 2] = 45;   //MEM_FREE_COUNT
+
+//---------------------state of remaning process set to TERMINATED---------------------
+
+i = 2;
+
+while(i < MAX_PROC_NUM) do
+    [PROCESS_TABLE + 16*i + 4] = TERMINATED;
+    i = i + 1;
+endwhile;
+
+//------------------------------Entry in FILE_STATUS_TABLE------------------------------
+
+i = 0;
+
+while(i < MAX_FILE_NUM) do
+    [FILE_STATUS_TABLE + 4*i + 0] = -1;             //LOCKING_PID
+    [FILE_STATUS_TABLE + 4*i + 1] = -1;             //FILE_OPEN_COUNT
+    i = i + 1;
+endwhile;
+
+//------------------------------Entry in BUFFER_TABLE------------------------------
+
+i = 0;
+
+while(i < MAX_BUFFER) do
+    [BUFFER_TABLE + 4*i + 0] = -1;          //BLOCK_NUM
+    [BUFFER_TABLE + 4*i + 1] = 0;           //DIRTY
+    [BUFFER_TABLE + 4*i + 2] = -1;          //LOCKING_PID
+    i = i + 1;
+endwhile;
+
+[TERMINAL_STATUS_TABLE] = 0;  	     //Status
+
+[DISK_STATUS_TABLE] = 0;        //Status
+
+return;

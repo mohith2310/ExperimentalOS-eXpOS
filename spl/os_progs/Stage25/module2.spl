@@ -1,0 +1,130 @@
+alias funcNo R1;
+
+//----------------------------------RELEASE_BLOCK----------------------------------
+
+if(funcNo == RELEASE_BLOCK) then
+    //R2 has block
+    [DISK_FREE_LIST + R2] = [DISK_FREE_LIST + R2] - 1;
+    return;
+endif;
+
+//----------------------------------GET_CODE_PAGE----------------------------------
+
+
+if(R1 == GET_CODE_PAGE) then
+
+    // R2 has block number
+    alias i R3;
+    alias block R4;
+    i = 0;
+    while(i < 16) do
+        block = 4;
+        while(block < 8) do
+            if([DISK_MAP_TABLE + 10*i + block] == R2 && [PAGE_TABLE_BASE + 20*i + 2*block] != -1) then
+                R0 = [PAGE_TABLE_BASE + 20*i + 2*block];
+                [MEMORY_FREE_LIST + R0] = [MEMORY_FREE_LIST + R0] + 1;
+                return;
+            endif;
+            block = block + 1;
+        endwhile;
+        i = i + 1;
+    endwhile;
+
+    multipush(R2);
+    R1 = GET_FREE_PAGE;
+    call MEMORY_MANAGER;
+    multipop(R2);
+
+    multipush(R0);
+
+    R1 = DISK_LOAD;
+    R4 = R2;            //block_num
+    R3 = R0;            //page_num
+    R2 = [SYSTEM_STATUS_TABLE + 1];
+    call DEVICE_MANAGER;
+    multipop(R0);
+
+    return;
+endif;
+
+//----------------------------------RELEASE_PAGE----------------------------------
+
+if(funcNo == RELEASE_PAGE) then
+
+    alias pageNo R2;
+    [MEMORY_FREE_LIST+pageNo] = [MEMORY_FREE_LIST+pageNo]-1;
+
+    if([MEMORY_FREE_LIST+pageNo]==0) then
+        [SYSTEM_STATUS_TABLE+2] = [SYSTEM_STATUS_TABLE+2]+1;    //MEM_FREE_COUNT
+    endif;
+
+    alias i R3;
+    i=0;
+    while(i<16) do
+        if([PROCESS_TABLE+16*i+4]==WAIT_MEM) then
+            [PROCESS_TABLE+16*i+4] = READY;
+        endif;
+        i = i+1;
+    endwhile;
+
+    return;
+endif;
+
+//----------------------------------GET_FREE_PAGE----------------------------------
+
+if(R1 == GET_FREE_PAGE)then
+    //return in R0
+
+    [SYSTEM_STATUS_TABLE+3] = [SYSTEM_STATUS_TABLE+3]+1;    //WAIT_MEM_COUNT
+    while([SYSTEM_STATUS_TABLE+2]==0) do
+
+        [PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+4] = WAIT_MEM;
+
+        backup;
+        call SCHEDULER;
+        restore;
+    endwhile;
+
+    [SYSTEM_STATUS_TABLE+3] = [SYSTEM_STATUS_TABLE+3]-1;    //WAIT_MEM_COUNT
+    [SYSTEM_STATUS_TABLE+2] = [SYSTEM_STATUS_TABLE+2]-1;    //MEM_FREE_COUNT
+
+    alias i R3;
+    i = 76;
+
+    while(i<MAX_MEM_PAGE) do
+        if([MEMORY_FREE_LIST+i]==0) then
+            [MEMORY_FREE_LIST+i] = 1;
+            R0 = i;
+
+            break;
+        endif;
+        i = i+1;
+    endwhile;
+
+    return;
+endif;
+
+//----------------------------------GET_FREE_BLOCK----------------------------------
+
+if(funcNo == GET_FREE_BLOCK) then
+    alias i R2;
+    i = DISK_FREE_AREA;
+
+    while(i < DISK_SWAP_AREA) do        //blocks from 69 to 255 are user blocks
+        if([DISK_FREE_LIST + i] == 0) then
+            break;
+        endif;
+        i = i + 1;
+    endwhile;
+
+    if(i == DISK_SWAP_AREA) then
+        R0 = -1;
+        return;
+    endif;
+
+    [DISK_FREE_LIST + i] = 1;
+    R0 = i;
+    return;
+endif;
+
+ 
