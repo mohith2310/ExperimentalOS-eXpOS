@@ -51,9 +51,7 @@ if(sys_call_no==INT_OPEN) then
 	//If no free per-process-resource-table entry is found
 	if(PPRT_index==-1) then
 		[ret] = -3;
-
 		[proTableEntry + 9] = 0;
-
 		SP = userSP;
 		ireturn;
 	endif;

@@ -132,26 +132,24 @@ endif;
 
 if(funcNo==BUFFERED_READ) then
 
-	alias block_no R12;
-	alias offset R13;
-	alias word R14;
-	block_no=R2;
-	offset=R3;
-	word=R4;
-
+	alias block_no R2;
+	alias offset R3;
+	alias word R4;
+	
 	alias buffer_no R5;
 	buffer_no = block_no%4;
+	
 	backup;
-		R1=1;
+		R1=ACQUIRE_BUFFER;
 		R2=[SYSTEM_STATUS_TABLE+1];
 		R3=buffer_no;
 		call MOD_0;
 	restore;
 
-	if([BUFFER_TABLE+4*buffer_no+0]!=block_no) then
+	if([BUFFER_TABLE+4*buffer_no+0] != block_no) then
 		if([BUFFER_TABLE+4*buffer_no+1]==1) then
 			backup;
-				R1=1;
+				R1=DISK_STORE;
 				R2=[SYSTEM_STATUS_TABLE+1];
 				R3=71+buffer_no;
 				R4=block_no;
@@ -161,7 +159,7 @@ if(funcNo==BUFFERED_READ) then
 
 		endif;
 		backup;
-			R1=2;
+			R1=DISK_LOAD;
 			R2=[SYSTEM_STATUS_TABLE+1];
 			R3=71+buffer_no;
 			R4=block_no;

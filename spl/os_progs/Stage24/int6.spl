@@ -17,7 +17,7 @@ fileDescriptor=[[PTBR + 2*((userSP-4)/512)]*512 + (userSP-4)%512];
 alias ret R5;
 ret = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
 
-//checking whether file descriptor is valid or not
+//checking whether file descriptor is valid or not(terminal read has fileDes -1)
 if(fileDescriptor!=-1) then
 
 	if(fileDescriptor<0 || fileDescriptor>7) then
@@ -71,7 +71,7 @@ if(fileDescriptor!=-1) then
 	if(inodeIdx==INODE_ROOT) then
 		if(lseek==480) then
 			backup;
-			R1=5;
+			R1=RELEASE_INODE;
 			R2=[SYSTEM_STATUS_TABLE + 1];
 			R3=inodeIdx;
 			call MOD_0;
@@ -120,6 +120,7 @@ if(fileDescriptor!=-1) then
 		call MOD_3;
 		restore;
 
+		//inc lseek
 		[OPEN_FILE_TABLE + 4*open_file_index + 2] = [OPEN_FILE_TABLE + 4*open_file_index + 2]+1;
 
 		backup;
