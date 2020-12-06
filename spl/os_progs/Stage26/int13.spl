@@ -1,0 +1,95 @@
+// SYSTEM CALL NUMBER FOR SEMGET = 17
+// SYSTEM CALL NUMBER FOR SEMRELEASE = 18
+
+alias userSP R1;
+userSP = SP;
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 13] = SP;     //UPTR
+
+SP = [PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE+1] + 11]*512 - 1;
+
+alias syscallnum R2;
+syscallnum = [[PTBR+2*((userSP-5)/512)]*512 + (userSP-5)%512];
+
+//---------------------------------------SEMGET------------------------------------//
+
+if(syscallnum == INT_SEMGET) then
+
+    [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 9] = INT_SEMGET;      //MODE_FLAG
+    alias resource_table R3;
+    resource_table = [PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE+1] + 11]*512 + RESOURCE_TABLE_OFFSET;
+
+    alias i R4;
+    i = 0;
+
+    while(i < 8) do
+        if([resource_table + 2*i] == -1)then
+            break;
+        endif;
+        i = i + 1;
+    endwhile;
+
+    if(i == 8) then
+
+        [[PTBR+2*((userSP-1)/512)]*512 + (userSP-1)%512] = -1;      //RET value
+        SP = userSP;
+        [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 9] = 0;       //MODE_FLAG
+        ireturn;
+    endif;
+
+    multipush(R1,R2,R3,R4);
+    R1 = ACQUIRE_SEMAPHORE;
+    R2 = [SYSTEM_STATUS_TABLE+1];
+    call RESOURCE_MANAGER;
+    multipop(R1,R2,R3,R4);
+
+    if(R0 == -1) then
+        [[PTBR+2*((userSP-1)/512)]*512 + (userSP-1)%512] = -2;
+        SP = userSP;
+        [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 9] = 0;       //MODE_FLAG
+        ireturn;
+
+    else
+
+        [resource_table + 2*i] = SEMAPHORE;
+        [resource_table + 2*i + 1] = R0;
+        [[PTBR+2*((userSP-1)/512)]*512 + (userSP-1)%512] = i;       //SEMAPHORE desc
+        SP = userSP;
+        [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 9] = 0;       //MODE_FLAG
+        ireturn;
+    endif;
+endif;
+
+//-----------------------------------SEMRELEASE------------------------------------//
+
+if(syscallnum == INT_SEMRELEASE) then
+
+    [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 9] = INT_SEMRELEASE;    //MODE_FLAG
+    alias semdesc R5;
+    semdesc = [[PTBR+2*((userSP-4)/512)]*512 + (userSP-4)%512];     //SEMAPHORE desc
+
+    alias resource_table R4;
+    resource_table = [PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE+1] + 11]*512 + RESOURCE_TABLE_OFFSET;
+
+    if(semdesc > 7 || semdesc < 0 || [resource_table + 2*semdesc] != SEMAPHORE) then
+
+        [[PTBR+2*((userSP-1)/512)]*512 + (userSP-1)%512] = -1;      //RET value
+		SP = userSP;
+		[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 9] = 0;       //MODE_FLAG
+		ireturn;
+    endif;
+
+    multipush(R1,R2,R5,R4);
+    R1 = RELEASE_SEMAPHORE;
+    R2 = [SYSTEM_STATUS_TABLE+1];
+    R3 = [resource_table + 2*semdesc + 1];
+    call RESOURCE_MANAGER;
+    multipop(R1,R2,R5,R4);
+
+    [resource_table + 2*semdesc] = -1;      //invalidate entry
+
+    [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 9] = 0;       //MODE_FLAG
+	[[PTBR+2*((userSP-1)/512)]*512 + (userSP-1)%512] = 0;       //RET value
+	SP = userSP;
+	ireturn;
+
+endif;

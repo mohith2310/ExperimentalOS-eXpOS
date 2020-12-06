@@ -1,0 +1,45 @@
+//Logout has system call number 28
+//Logout system call is used to logout the current user from the system
+//it does not take any argument
+//Logout system call can only be executed from the shell process (PID = 2)
+//return -1 on error or does not return
+
+alias currPid R5;
+currPid = [SYSTEM_STATUS_TABLE + 1];
+
+[PROCESS_TABLE + currPid*16 + 9] = INT_LOGOUT;	//set the mode flag
+
+alias userSP R6;
+userSP = SP;
+
+[PROCESS_TABLE + currPid*16 + 13] = SP;	            //save SP into UPTR
+SP = [PROCESS_TABLE + currPid*16 + 11] * 512 - 1;	    //change to kernel stack
+
+alias ret_adr R7;
+ret_adr = [PTBR + 2 * ((userSP - 1) / 512)] * 512 + (userSP - 1) % 512;
+
+if(currPid != 2) then	                        //curr process is not shell
+	[ret_adr] = -1;	
+	[PROCESS_TABLE + currPid*16 + 9] = 0;	    //reset the mode flag
+	SP = userSP;
+	ireturn;
+endif;
+
+//Kill all user processes except the shell by calling the kill_all()
+
+backup;
+R1 = KILL_ALL;
+R2 = currPid;
+call PROCESS_MANAGER;
+restore;
+
+//set the state of shell process to TERMINATED	
+
+[PROCESS_TABLE + 2*16 + 4] = TERMINATED;
+[PROCESS_TABLE + 2*16 + 13] = 8*512;	//set the UPTR 
+[[PAGE_TABLE_BASE + 2*20 + 16]*512] = [[PAGE_TABLE_BASE + 2*20 + 8]*512 + 1];   //store the entry point on top of user stack
+
+[PROCESS_TABLE + 1*16 + 4] = READY;
+[SYSTEM_STATUS_TABLE] = KERNEL;
+
+call SCHEDULER;

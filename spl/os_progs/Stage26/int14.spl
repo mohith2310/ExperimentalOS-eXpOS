@@ -1,0 +1,107 @@
+// SYSTEM CALL NUMBER FOR SEMLOCK = 19
+// SYSTEM CALL NUMBER FOR SEMUNLOCK = 20
+
+alias userSP R1;
+userSP = SP;
+
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 13] = SP;     //UPTR
+SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 11]*512 - 1;     //Kernal Stack
+
+alias syscallnum R2;
+syscallnum = [[PTBR+2*((userSP-5)/512)]*512 + (userSP-5)%512];
+
+alias semaphore_desc R3;
+semaphore_desc = [[PTBR+2*((userSP-4)/512)]*512 + (userSP-4)%512];
+
+//----------------------------------------SEMLOCK----------------------------------//
+
+// return 0 if success or the sempahore is already locked by this process
+// return -1 if semID is invalid
+
+if(syscallnum == INT_SEMLOCK) then
+	[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 9] = INT_SEMLOCK;     //MODE_FLAG
+
+    alias resource_table R4;
+    resource_table = [PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE+1] + 11]*512 + RESOURCE_TABLE_OFFSET;
+
+    if(semaphore_desc > 7 || semaphore_desc < 0 || [resource_table + 2*semaphore_desc] != SEMAPHORE) then
+
+        [[PTBR+2*((userSP-1)/512)]*512 + (userSP-1)%512] = -1;      //RET value
+		SP = userSP;
+		[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 9] = 0;       //MODE_FLAG
+		ireturn;
+    endif;
+
+    alias semaphore_id R5;
+    semaphore_id = [resource_table + 2*semaphore_desc + 1];
+
+    while([SEMAPHORE_TABLE + 4*semaphore_id] != -1) do              //LOCKING_PID
+
+        [PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE+1] + 4] = WAIT_SEMAPHORE;
+        [PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE+1] + 5] = semaphore_id;
+
+        backup;
+        call SCHEDULER;
+        restore;
+
+    endwhile;
+
+    [SEMAPHORE_TABLE + 4*semaphore_id] = [SYSTEM_STATUS_TABLE + 1]; //LOCKING_PID
+
+    [[PTBR+2*((userSP-1)/512)]*512 + (userSP-1)%512] = 0;           //RET value
+	[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 9] = 0;           //MODE_FLAG
+	SP = userSP;
+	ireturn;
+endif;
+
+//--------------------------------------SEMUNLOCK----------------------------------//
+
+//return 0 if success
+//return -1 if invalid semID
+//return -2 if semaphore was not locked by the calling process
+
+if(syscallnum == INT_SEMUNLOCK) then
+
+	[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 9] = INT_SEMUNLOCK;     //MODE_FLAG
+
+    alias resource_table R4;
+    resource_table = [PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE+1] + 11]*512 + RESOURCE_TABLE_OFFSET;
+
+    if(semaphore_desc > 7 || semaphore_desc < 0 || [resource_table + 2*semaphore_desc] != SEMAPHORE) then
+
+        [[PTBR+2*((userSP-1)/512)]*512 + (userSP-1)%512] = -1;      //RET value
+		SP = userSP;
+		[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 9] = 0;       //MODE_FLAG
+		ireturn;
+    endif;
+
+    alias semaphore_id R5;
+    semaphore_id = [resource_table + 2*semaphore_desc + 1];
+
+    if([SEMAPHORE_TABLE + 4*semaphore_id] != -1) then
+        if([SEMAPHORE_TABLE + 4*semaphore_id] != [SYSTEM_STATUS_TABLE+1]) then
+            [[PTBR+2*((userSP-1)/512)]*512 + (userSP-1)%512] = -2;	      //RET -2
+			[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16 + 9] = 0;         //MODE_FLAG
+			SP = userSP;
+			ireturn;
+        endif;
+
+        [SEMAPHORE_TABLE + 4*semaphore_id] = -1;        //UNLOCK SEMAPHORE
+
+        //set the processes to ready which are waiting for this semaphore
+
+        alias i R6;
+        i = 0;
+        while(i < 16) do
+            if([PROCESS_TABLE + 16*i + 4] == WAIT_SEMAPHORE && [PROCESS_TABLE + 16*i + 5] == semaphore_id) then
+                [PROCESS_TABLE + 16*i + 4] = READY;
+            endif;
+            i = i + 1;
+        endwhile;
+    endif;
+
+    [[PTBR+2*((userSP-1)/512)]*512 + (userSP-1)%512] = 0;       //RET value
+	[PROCESS_TABLE+[SYSTEM_STATUS_TABLE+1]*16 + 9] = 0;         //MODE_FLAG
+	SP = userSP;
+	ireturn;
+endif;

@@ -1,0 +1,91 @@
+// 11 : GETPID
+// 12 : GETPPID
+// 13 : WAIT
+// 14 : SIGNAL
+
+alias userSP R1;
+userSP = SP;
+
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 13] = SP;       //UPTR
+SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 11]*512 - 1;      //Set to Kernal
+
+alias syscallno R2;
+syscallno = [[PTBR + 2*((userSP-5)/512)]*512 + ((userSP-5)%512)];
+
+//---------------------------------------GETPID------------------------------------------//
+
+if(syscallno == INT_GETPID) then
+	[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 9] = INT_GETPID;      //MODE_FLAG
+    [[PTBR+2*((userSP-1)/512)]*512 + ((userSP-1)%512)] = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 1];          //RET value
+    SP = userSP;
+    [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 9] = 0;           //MODE_FLAG
+    ireturn;
+
+endif;
+
+//--------------------------------------GETPPID------------------------------------------//
+
+if(syscallno == INT_GETPPID) then
+	[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 9] = INT_GETPPID;      //MODE_FLAG
+    [[PTBR+2*((userSP-1)/512)]*512 + ((userSP-1)%512)] = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 2];          //RET value
+    SP = userSP;
+    [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 9] = 0;           //MODE_FLAG
+    ireturn;
+
+endif;
+
+//---------------------------------------SIGNAL------------------------------------------//
+
+if(syscallno == INT_SIGNAL) then
+	[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 9] = INT_SIGNAL;      //MODE_FLAG
+    
+    alias i R3;
+    i = 0;
+    while(i < 16) do
+        if([PROCESS_TABLE + 16*i + 4] == WAIT_PROCESS && [PROCESS_TABLE + 16*i + 5] == [SYSTEM_STATUS_TABLE + 1]) then
+            [PROCESS_TABLE + 16*i + 4] = READY;
+        endif;
+        i = i + 1;
+    endwhile; 
+
+    [[PTBR+2*(userSP-1)/512]*512 + ((userSP-1)%512)] = 0;           //RET value
+    [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 9] = 0;           //MODE_FLAG
+    SP = userSP;
+
+    ireturn;
+
+endif;
+
+//---------------------------------------WAIT------------------------------------------//
+
+if(syscallno == INT_WAIT) then
+	[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 9] = INT_WAIT;      //MODE_FLAG
+    
+    //PID as argument for which sys called process will WAIT
+
+    alias pid R3;
+    pid = [[PTBR + 2*((userSP-4)/512)]*512 + ((userSP-4)%512)];
+
+    if(pid == [SYSTEM_STATUS_TABLE+1] || pid >= 16 || pid < 0 || [PROCESS_TABLE + 16*pid +4] == TERMINATED) then
+
+        [[PTBR + 2*((userSP-1)/512)]*512 + ((userSP-1)%512)] = -1;      //Return value
+        [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 9] = 0;           //MODE_FLAG
+        SP = userSP;
+
+        ireturn;
+    endif;
+
+    [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 4] = WAIT_PROCESS;
+    [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 5] = pid;
+
+    backup;
+    call SCHEDULER;
+    restore;
+
+    [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 9] = 0;           //MODE_FLAG
+	[[PTBR + 2*((userSP-1)/512)]*512 + ((userSP-1)%512)] = 0;         //RET Value
+    SP = userSP;
+
+    ireturn;
+
+endif;
