@@ -8,6 +8,9 @@ enddecl
 begin
     tmp = exposcall("Read", -1, name);
     tmp = exposcall("Delete", name);
+    if(tmp == -3) then
+      write("Error");
+    endif;
     return 0;
 end
 }

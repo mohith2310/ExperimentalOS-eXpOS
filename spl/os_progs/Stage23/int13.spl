@@ -99,7 +99,7 @@ if(sysCalNum == 18)	then
 
 	backup;
 
-	R1 = ACQUIRE_SEMAPHORE;
+	R1 = RELEASE_SEMAPHORE;
 	R2 = [SYSTEM_STATUS_TABLE+1];
 	R3 = [UAPage*512+(semDescriptor*2+496)+1];
 

@@ -127,7 +127,7 @@ if(syscall == 4) then
 
 	// file not found
 	if(index == -1) then
-		[ret_adr] = 0;
+		[ret_adr] = -3;
 		SP = [process_table+13];
 		[process_table+9] = 0;
 
