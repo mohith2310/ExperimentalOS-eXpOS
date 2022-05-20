@@ -17,16 +17,6 @@ A toy operating-system built from scratch using the [Roadmap](http://exposnitc.g
 ![alt text](http://exposnitc.github.io/img/os-design/high_level_design.png)
 
 
-## Installation
-
-1. Download the eXpos.
-2. Rename to myexpos and move it to ($HOME)
-3. Run the following commands.
-
-```bash
-$ cd $HOME/myexpos
-$ make run
-```
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
